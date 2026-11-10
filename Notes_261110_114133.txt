@@ -1,0 +1,90 @@
+let notices = [];
+let currentCategory = "전체";
+
+async function loadNotices() {
+try {
+const response = await fetch("notices.json");
+
+if (!response.ok) {
+throw new Error("공지 데이터를 불러오지 못했습니다.");
+}
+
+notices = await response.json();
+displayNotices(notices);
+
+} catch (error) {
+document.getElementById("noticeList").innerHTML =
+"<p>공지사항을 불러오지 못했습니다.</p>";
+console.error(error);
+}
+}
+
+function displayNotices(list) {
+const noticeList = document.getElementById("noticeList");
+noticeList.innerHTML = "";
+
+if (list.length === 0) {
+noticeList.innerHTML = "<p>검색 결과가 없습니다.</p>";
+return;
+}
+
+list.forEach(notice => {
+const card = document.createElement("div");
+card.className = "notice-card";
+
+card.innerHTML = &lt;span class="category"&gt;${notice.category}</span>
+<h3>${notice.title}&lt;/h3&gt; &lt;p&gt;${notice.content}</p>
+<small>${notice.date}&lt;/small&gt;;
+
+noticeList.appendChild(card);
+});
+}
+
+function filterNotice(category) {
+currentCategory = category;
+
+const filtered = category === "전체"
+? notices
+: notices.filter(notice => notice.category === category);
+
+displayNotices(filtered);
+}
+
+function searchNotice() {
+const keyword = document.getElementById("searchInput").value.trim();
+
+const filtered = notices.filter(notice => {
+const matchesCategory =
+currentCategory === "전체" ||
+notice.category === currentCategory;
+
+const matchesKeyword =
+notice.title.includes(keyword) ||
+notice.content.includes(keyword);
+
+return matchesCategory && matchesKeyword;
+});
+
+displayNotices(filtered);
+}
+
+document.getElementById("searchBtn").addEventListener("click", searchNotice);
+
+document.getElementById("searchInput").addEventListener("keydown", event => {
+if (event.key === "Enter") {
+searchNotice();
+}
+});
+
+document.querySelectorAll(".category-btn").forEach(button => {
+button.addEventListener("click", () => {
+document.querySelectorAll(".category-btn").forEach(btn => {
+btn.classList.remove("active");
+});
+
+button.classList.add("active");
+filterNotice(button.textContent.trim());
+});
+});
+
+loadNotices();
